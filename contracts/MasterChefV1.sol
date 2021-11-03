@@ -19,7 +19,7 @@ contract MasterChefV1 is Ownable {
     using SafeMath for uint256;
     // Info of each user.
     struct UserInfo {
-        uint256 amount; // How many LP tokens the user has provided.
+        uint256 amount; // How many BUSD tokens the user has provided.
         uint256 rewardDebt; // Reward debt. See explanation below.
         //
         // We do some fancy math here. Basically, any point in time, the amount of WEAVEs
@@ -27,7 +27,7 @@ contract MasterChefV1 is Ownable {
         //
         //   pending reward = (user.amount * pool.accWeavePerShare) - user.rewardDebt
         //
-        // Whenever a user deposits or withdraws LP tokens to a pool. Here's what happens:
+        // Whenever a user deposits or withdraws BUSD tokens to a pool. Here's what happens:
         //   1. The pool's `accSushiPerShare` (and `lastRewardBlock`) gets updated.
         //   2. User receives the pending reward sent to his/her address.
         //   3. User's `amount` gets updated.
@@ -35,7 +35,7 @@ contract MasterChefV1 is Ownable {
     }
     // Info of each pool.
     struct PoolInfo {
-        IERC20 stakeToken; // Address of WEAVE token contract.
+        IERC20 stakeToken; // Address of BUSD token contract.
         uint256 allocPoint; // How many allocation points assigned to this pool. WEAVEs to distribute per block.
         uint256 lastRewardBlock; // Last block number that WEAVEs distribution occurs.
         uint256 accWeavePerShare; // Accumulated WEAVEs per share, times 1e12. See below.
@@ -56,11 +56,13 @@ contract MasterChefV1 is Ownable {
    
     // Info of each pool.
     PoolInfo[] public poolInfo;
+    
     // Info of each user that stakes BUSD tokens.
     mapping(uint256 => mapping(address => UserInfo)) public userInfo;
+
     // Total allocation poitns. Must be the sum of all allocation points in all pools.
     uint256 public totalAllocPoint = 0;
-    // The block number when SUSHI mining starts.
+    // The block number when WEAVE mining starts.
     uint256 public startBlock;
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
@@ -89,7 +91,7 @@ contract MasterChefV1 is Ownable {
         
          // staking pool
         poolInfo.push(PoolInfo({
-            stakeToken: _weave,
+            stakeToken: _busd,
             allocPoint: _allocPoint,
             lastRewardBlock: startBlock,
             accWeavePerShare: 0
