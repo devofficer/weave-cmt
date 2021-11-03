@@ -56,7 +56,7 @@ contract MasterChefV1 is Ownable {
    
     // Info of each pool.
     PoolInfo[] public poolInfo;
-    
+
     // Info of each user that stakes BUSD tokens.
     mapping(uint256 => mapping(address => UserInfo)) public userInfo;
 
@@ -244,7 +244,7 @@ contract MasterChefV1 is Ownable {
         user.rewardDebt = 0;
     }
 
-    // Safe sushi transfer function, just in case if rounding error causes pool to not have enough WEAVEs.
+    // Safe weave transfer function, just in case if rounding error causes pool to not have enough WEAVEs.
     function safeWeaveTransfer(address _to, uint256 _amount) internal {
         uint256 weaveBal = weave.balanceOf(address(this));
         if (_amount > weaveBal) {
