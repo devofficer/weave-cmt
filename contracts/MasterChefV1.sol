@@ -49,7 +49,7 @@ contract MasterChefV1 is Ownable {
     address public devaddr;
     // Block number when bonus WEAVE period ends.
     uint256 public bonusEndBlock;
-    // SUSHI tokens created per block.
+    // WEAVE tokens created per block.
     uint256 public weavePerBlock;
     // Bonus muliplier for early weave makers.
     uint256 public constant BONUS_MULTIPLIER = 10;
