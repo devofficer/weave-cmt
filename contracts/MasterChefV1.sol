@@ -28,7 +28,7 @@ contract MasterChefV1 is Ownable {
         //   pending reward = (user.amount * pool.accWeavePerShare) - user.rewardDebt
         //
         // Whenever a user deposits or withdraws BUSD tokens to a pool. Here's what happens:
-        //   1. The pool's `accSushiPerShare` (and `lastRewardBlock`) gets updated.
+        //   1. The pool's `accWeavePerShare` (and `lastRewardBlock`) gets updated.
         //   2. User receives the pending reward sent to his/her address.
         //   3. User's `amount` gets updated.
         //   4. User's `rewardDebt` gets updated.
@@ -52,7 +52,10 @@ contract MasterChefV1 is Ownable {
     // WEAVE tokens created per block.
     uint256 public weavePerBlock;
     // Bonus muliplier for early weave makers.
-    uint256 public constant BONUS_MULTIPLIER = 10;
+    uint256 public constant BONUS_MULTIPLIER = 1;
+
+    //Pause state variable
+    bool public isPaused = true;
    
     // Info of each pool.
     PoolInfo[] public poolInfo;
@@ -71,6 +74,8 @@ contract MasterChefV1 is Ownable {
         uint256 indexed pid,
         uint256 amount
     );
+    event WeaveTokenDeposited(address indexed owner,uint256 amount,uint256 timetstamp);
+    event PauseStatusChanged(address owner,uint256 timetstamp);
 
     constructor(
         IERC20 _weave,
@@ -199,7 +204,7 @@ contract MasterChefV1 is Ownable {
         PoolInfo storage pool = poolInfo[0];
         UserInfo storage user = userInfo[0][msg.sender];
         updatePool();
-        if (user.amount > 0) {
+        if (user.amount > 0 && (!isPaused)) {
             uint256 pending =
                 user.amount.mul(pool.accWeavePerShare).div(1e12).sub(
                     user.rewardDebt
@@ -223,16 +228,19 @@ contract MasterChefV1 is Ownable {
         UserInfo storage user = userInfo[0][msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
         updatePool();
-        uint256 pending =
+        if(!isPaused){
+            uint256 pending =
             user.amount.mul(pool.accWeavePerShare).div(1e12).sub(
                 user.rewardDebt
             );
         safeWeaveTransfer(msg.sender, pending);
+       }
         user.amount = user.amount.sub(_amount);
         user.rewardDebt = user.amount.mul(pool.accWeavePerShare).div(1e12);
         pool.stakeToken.transfer(address(msg.sender), _amount);
         emit Withdraw(msg.sender, 0, _amount);
     }
+
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
     function emergencyWithdraw() public {
@@ -259,4 +267,26 @@ contract MasterChefV1 is Ownable {
         require(msg.sender == devaddr, "dev: wut?");
         devaddr = _devaddr;
     }
+
+     // OWNER FUNCTIONS
+    
+       // Deposit Weave Tokens into smart contract
+    function depositWeaveTokens(uint256 _amount) public onlyOwner {
+         require(weave.approve(address(this), _amount),"Approval Failed");
+         address owner = owner();
+         weave.transferFrom(owner, address(this), _amount);
+         emit WeaveTokenDeposited(owner,_amount,block.timestamp);
+    }
+    
+    function changePauseStatus() public onlyOwner {
+        if(isPaused){
+            isPaused = false;
+        }
+        else {
+            isPaused=true;
+        }
+        emit PauseStatusChanged(msg.sender,block.timestamp);
+    }
+  
+
 }
