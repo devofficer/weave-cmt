@@ -42,11 +42,18 @@ contract Stake is Ownable {
    // Block number when bonus WEAVE period ends.
     uint256 public bonusEndBlock;
 
+
+    // Total Weave Tokens to be distributed
+    uint256 public TotalWeaveTokenRewards;
+
+    // Delay Time Period
+    uint256 public REWARD_PERIOD;
+
     // Bonus muliplier for early weave makers.
     uint256 public constant BONUS_MULTIPLIER = 1;
 
     //Pause state variable
-    bool public isPaused = true;
+    bool public isPaused = false;
    
 
     // Accumulated WEAVEs per share, times 1e12. See below.
@@ -67,14 +74,16 @@ contract Stake is Ownable {
      constructor(
         IERC20 _weave,
         IERC20 _busd,
-        uint256 _weavePerBlock,
-        uint256 _bonusEndBlock
+        uint256 _bonusEndBlock,
+        uint256 _totalWeaveRewardsAmount,
+        uint256 _rewardPeriod
     ) {
         weave = _weave;
         busd=_busd;
-        weavePerBlock = _weavePerBlock;
         bonusEndBlock = _bonusEndBlock;
-        
+        TotalWeaveTokenRewards=_totalWeaveRewardsAmount;
+        REWARD_PERIOD = block.timestamp.add(_rewardPeriod);
+        weavePerBlock =(_totalWeaveRewardsAmount*1e6)/(28800*_rewardPeriod);
     }
 
       // Return reward multiplier over the given _from to _to block.
@@ -107,7 +116,7 @@ contract Stake is Ownable {
           accRewardsPerShareTemp = accWeavePerShare.add((multiplier.mul(weavePerBlock)).mul(1e18).div(supply));
           
         }
-        return user.amount.mul(accRewardsPerShareTemp).div(1e18).sub(user.rewardDebt).add(user.userPendingRewards);
+        return user.amount.mul(accRewardsPerShareTemp).div(1e24).sub(user.rewardDebt).add(user.userPendingRewards);
     }
 
 
@@ -134,7 +143,7 @@ contract Stake is Ownable {
         UserInfo storage user = userInfo[msg.sender];
         updatePool();
         if (user.amount > 0) {
-            uint256 pending = user.amount.mul(accWeavePerShare).div(1e18).sub(user.rewardDebt).add(user.userPendingRewards);
+            uint256 pending = user.amount.mul(accWeavePerShare).div(1e24).sub(user.rewardDebt).add(user.userPendingRewards);
             if(pending > 0) {
                 user.userPendingRewards = user.userPendingRewards.add(pending);
             }
@@ -144,25 +153,25 @@ contract Stake is Ownable {
             user.amount = user.amount.add(_amount);
         }
         
-        user.rewardDebt = user.amount.mul(accWeavePerShare).div(1e18);
+        user.rewardDebt = user.amount.mul(accWeavePerShare).div(1e24);
         emit Deposit(msg.sender, _amount);
     }
     
     // claim pending weave tokens from protocol
     function claimRewards() public {
-        
+        require(block.timestamp>=REWARD_PERIOD,"Rewards claim hasnt been activated");
         UserInfo storage user = userInfo[msg.sender];
         updatePool();
         uint256 pending;
-        if (user.amount > 0 && (!isPaused)) {
-             pending = user.amount.mul(accWeavePerShare).div(1e18).sub(user.rewardDebt).add(user.userPendingRewards);
+        if (user.amount > 0) {
+             pending = user.amount.mul(accWeavePerShare).div(1e24).sub(user.rewardDebt).add(user.userPendingRewards);
             if(pending > 0) {
                 safeWeaveTransfer(msg.sender, pending);
                 user.userPendingRewards =0;
             }
         }
         
-        user.rewardDebt = user.amount.mul(accWeavePerShare).div(1e18);
+        user.rewardDebt = user.amount.mul(accWeavePerShare).div(1e24);
         
         emit RewardsClaimed(msg.sender,pending);
     }
@@ -174,7 +183,7 @@ contract Stake is Ownable {
         UserInfo storage user = userInfo[msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
         updatePool();
-        uint256 pending = user.amount.mul(accWeavePerShare).div(1e18).sub(user.rewardDebt).add(user.userPendingRewards);
+        uint256 pending = user.amount.mul(accWeavePerShare).div(1e24).sub(user.rewardDebt).add(user.userPendingRewards);
         if(pending > 0 && (!isPaused)) {
             safeWeaveTransfer(msg.sender, pending);
             user.userPendingRewards = 0;
@@ -183,7 +192,7 @@ contract Stake is Ownable {
             user.amount = user.amount.sub(_amount);
             busd.transfer(address(msg.sender), _amount);
         }
-        user.rewardDebt = user.amount.mul(accWeavePerShare).div(1e18);
+        user.rewardDebt = user.amount.mul(accWeavePerShare).div(1e24);
         emit Withdraw(msg.sender,_amount);
     }
 
@@ -218,13 +227,13 @@ contract Stake is Ownable {
          emit WeaveTokenDeposited(owner,_amount,block.timestamp);
     }
     
-    function changePauseStatus() public onlyOwner {
-        if(isPaused){
-            isPaused = false;
-        }
-        else {
-            isPaused=true;
-        }
+    function startReward() public onlyOwner {
+        REWARD_PERIOD = block.timestamp; 
+        emit PauseStatusChanged(msg.sender,block.timestamp);
+    }
+
+     function delayReward() public onlyOwner {
+        REWARD_PERIOD = block.timestamp.add(REWARD_PERIOD); 
         emit PauseStatusChanged(msg.sender,block.timestamp);
     }
   
