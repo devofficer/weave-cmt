@@ -159,7 +159,7 @@ contract Stake is Ownable {
     
     // claim pending weave tokens from protocol
     function claimRewards() public {
-        require(block.timestamp>=REWARD_PERIOD,"Rewards claim hasnt been activated");
+        require(block.timestamp>=REWARD_PERIOD,"Rewards claim hasn't been activated");
         UserInfo storage user = userInfo[msg.sender];
         updatePool();
         uint256 pending;
@@ -228,7 +228,7 @@ contract Stake is Ownable {
     }
     
     function startReward() public onlyOwner {
-        REWARD_PERIOD = block.timestamp; 
+        REWARD_PERIOD = 30 days; 
         emit PauseStatusChanged(msg.sender,block.timestamp);
     }
 
