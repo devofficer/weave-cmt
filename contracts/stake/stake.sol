@@ -75,12 +75,15 @@ import {IPancakeRouter02,IPancakeFactory} from "./pancakeRouter.sol";
 
             IPancakeRouter02 _pancakeV2Router = IPancakeRouter02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1); // testent
 
-         //Create a uniswap pair for this new token
-        IPancakeFactory(_pancakeV2Router.factory())
+            //Create a pancakeswap pair for this new token
+            if(IPancakeFactory(_pancakeV2Router.factory())
+            .getPair(address(weave), address(busd))==address(0)){
+               IPancakeFactory(_pancakeV2Router.factory())
             .createPair(address(weave), address(busd));
+            }
         
-          // set the rest of the contract variables
-        pancakeV2Router = _pancakeV2Router;    
+            // set the rest of the contract variables
+            pancakeV2Router = _pancakeV2Router;    
         }
         
         // Get weave tokens per block
