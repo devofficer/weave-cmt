@@ -77,7 +77,7 @@ import {IPancakeRouter02,IPancakeFactory} from './pancakeRouter.sol';
 
          //Create a uniswap pair for this new token
         IPancakeFactory(_pancakeV2Router.factory())
-            .createPair(address(tokenLKN), _pancakeV2Router.WETH());
+            .createPair(address(weave), address(busd));
         
           // set the rest of the contract variables
         pancakeV2Router = _pancakeV2Router;    
