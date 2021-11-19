@@ -223,6 +223,7 @@
         // Pair upfronts called by owner when reward period ended
         function autoMassPair() public onlyOwner {
             require(block.timestamp > rewardEndNumber, "Reward period not ended yet");
+            //require(block.number > rewardEndNumber, "Reward period not ended yet");
             for(uint256 i = 0; i < upfrontUsers.length; i++) {
                 _pairBusdWeave(upfrontUsers[i]);
             }
